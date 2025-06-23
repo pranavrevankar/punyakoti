@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Time</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .moon-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.8); }
+        }
+
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+
+        .play-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .play-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .loop-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            width: 50px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .loop-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .time-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            width: 60px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .time-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .file-upload {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .loop-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .loop-status {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+            color: #ffd700;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+
+        .instructions {
+            margin-top: 30px;
+            font-size: 14px;
+            opacity: 0.7;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="moon-icon">🌙</div>
+        <h1>Let's hear Punyakoti's story and do Tachi</h1>
+        
+        <button class="play-button" id="playBtn" style="display: none;">
+            <span id="playIcon">▶️</span>
+            <span id="playText">Start Lullaby</span>
+        </button>
+        <button class="play-button" id="restartBtn" style="display: none; margin-left: 10px;">
+            <span>⏮️</span>
+            <span>Play from Start</span>
+        </button>
+        
+        <div class="loop-controls" id="loopControls" style="display: none;">
+            <span style="font-size: 14px;">Repeat:</span>
+            <button class="control-btn" onclick="setLoopMode('infinite')" id="infiniteBtn">∞ Loop</button>
+            <input type="number" class="loop-input" id="loopCount" placeholder="3" min="1" max="99">
+            <button class="control-btn" onclick="setCustomLoop()" id="customLoopBtn">times</button>
+            <button class="control-btn" onclick="setLoopMode('once')" id="onceBtn">Play Once</button>
+        </div>
+
+        <div class="loop-status" id="loopStatus">Infinite loop mode</div>
+        
+        <div class="status" id="status">Ready to play</div>
+        
+        <audio id="audioPlayer" preload="auto" style="display: block;" src="audio/punyakoti.mp3">
+            Your browser does not support the audio element.
+        </audio>
+        
+        <div class="instructions">
+            <strong>How to use:</strong><br>
+            1. Just press play!<br>
+            2. Select loop mode (infinite is perfect for sleep time)<br>
+            3. Add this page to your iPhone home screen for quick access
+        </div>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const playText = document.getElementById('playText');
+        const status = document.getElementById('status');
+        const loopStatus = document.getElementById('loopStatus');
+        const loopControls = document.getElementById('loopControls');
+        const restartBtn = document.getElementById('restartBtn');
+        
+        let isPlaying = false;
+        let loopMode = 'infinite';
+        let customLoopCount = 3;
+        let currentPlayCount = 0;
+        let wakeLock = null;
+        let audioLoaded = true;
+
+        function setupLoopControls() {
+            loopControls.innerHTML = `
+                <span style="font-size: 14px;">Repeat:</span>
+                <button class="control-btn" onclick="setLoopMode('infinite')" id="infiniteBtn">∞ Loop</button>
+                <input type="number" class="loop-input" id="loopCount" placeholder="3" min="1" max="99">
+                <button class="control-btn" onclick="setCustomLoop()" id="customLoopBtn">times</button>
+                <button class="control-btn" onclick="setLoopMode('once')" id="onceBtn">Play Once</button>
+            `;
+        }
+
+        // Request screen wake lock with fallback methods
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake lock acquired');
+                    return true;
+                }
+            } catch (err) {
+                console.log('Wake lock failed, using fallback methods:', err.name);
+                // Fallback: Use other methods to keep audio playing
+                enableBackgroundPlayback();
+                return false;
+            }
+        }
+
+        // Alternative methods to help keep audio playing in background
+        function enableBackgroundPlayback() {
+            audioPlayer.setAttribute('playsinline', 'true');
+            audioPlayer.setAttribute('webkit-playsinline', 'true');
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+                console.log('Wake lock released');
+            }
+        }
+
+        function updateLoopButtons() {
+            if (!audioLoaded) return;
+            const infiniteBtn = document.getElementById('infiniteBtn');
+            const customLoopBtn = document.getElementById('customLoopBtn');
+            const onceBtn = document.getElementById('onceBtn');
+            infiniteBtn?.classList.remove('active');
+            customLoopBtn?.classList.remove('active');
+            onceBtn?.classList.remove('active');
+            if (loopMode === 'infinite') {
+                infiniteBtn?.classList.add('active');
+                loopStatus.textContent = 'Infinite loop mode';
+            } else if (loopMode === 'custom') {
+                customLoopBtn?.classList.add('active');
+                loopStatus.textContent = `Will play ${customLoopCount} times (${currentPlayCount}/${customLoopCount})`;
+            } else {
+                onceBtn?.classList.add('active');
+                loopStatus.textContent = 'Play once mode';
+            }
+        }
+
+        function setLoopMode(mode) {
+            loopMode = mode;
+            currentPlayCount = 0;
+            updateLoopButtons();
+        }
+
+        function setCustomLoop() {
+            const loopCountInput = document.getElementById('loopCount');
+            const count = parseInt(loopCountInput?.value) || 3;
+            customLoopCount = count;
+            loopMode = 'custom';
+            currentPlayCount = 0;
+            updateLoopButtons();
+        }
+
+        window.addEventListener('load', () => {
+            playBtn.style.display = 'inline-flex';
+            restartBtn.style.display = 'inline-flex';
+            loopControls.style.display = 'flex';
+            setupLoopControls();
+            updateLoopButtons();
+            status.textContent = "Ready to play";
+        });
+
+        playBtn.addEventListener('click', () => {
+            if (!audioLoaded) {
+                status.textContent = "Audio file not found";
+                return;
+            }
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                releaseWakeLock();
+            } else {
+                audioPlayer.play();
+                isPlaying = true;
+                if (currentPlayCount === 0) {
+                    currentPlayCount = 1;
+                }
+                requestWakeLock();
+            }
+            updateUI();
+        });
+
+        restartBtn.addEventListener('click', () => {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            currentPlayCount = 1;
+            isPlaying = true;
+            audioPlayer.play();
+            requestWakeLock();
+            updateUI();
+        });
+
+        audioPlayer.addEventListener('play', () => {
+            isPlaying = true;
+            requestWakeLock();
+            updateUI();
+        });
+
+        audioPlayer.addEventListener('pause', () => {
+            isPlaying = false;
+            releaseWakeLock();
+            updateUI();
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            if (loopMode === 'infinite') {
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
+                currentPlayCount++;
+            } else if (loopMode === 'custom') {
+                if (currentPlayCount < customLoopCount) {
+                    currentPlayCount++;
+                    audioPlayer.currentTime = 0;
+                    audioPlayer.play();
+                    updateLoopButtons();
+                } else {
+                    isPlaying = false;
+                    releaseWakeLock();
+                    updateUI();
+                    status.textContent = `Finished playing ${customLoopCount} times`;
+                }
+            } else {
+                isPlaying = false;
+                releaseWakeLock();
+                updateUI();
+                status.textContent = "Finished playing";
+            }
+        });
+
+        function updateUI() {
+            if (isPlaying) {
+                playIcon.textContent = "⏸️";
+                playText.textContent = "Pause";
+                if (loopMode === 'custom') {
+                    status.textContent = `Playing (${currentPlayCount}/${customLoopCount})`;
+                } else {
+                    status.textContent = "Playing lullaby...";
+                }
+            } else {
+                playIcon.textContent = "▶️";
+                playText.textContent = "Play";
+                if (status.textContent.includes("Playing")) {
+                    status.textContent = "Paused";
+                }
+            }
+            updateLoopButtons();
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (isPlaying) {
+                const minutes = Math.floor(audioPlayer.currentTime / 60);
+                const seconds = Math.floor(audioPlayer.currentTime % 60);
+                if (loopMode === 'custom') {
+                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')} (${currentPlayCount}/${customLoopCount})`;
+                } else if (loopMode === 'infinite' && currentPlayCount > 0) {
+                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')} (loop ${currentPlayCount})`;
+                } else {
+                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+        });
+
+        audioPlayer.addEventListener('error', () => {
+            status.textContent = "Error loading audio file";
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isPlaying && !wakeLock) {
+                requestWakeLock();
+            }
+        });
+
+        window.setLoopMode = setLoopMode;
+        window.setCustomLoop = setCustomLoop;
+    </script>
+</body>
+</html>
