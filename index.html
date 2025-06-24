@@ -20,7 +20,7 @@
 
         .container {
             text-align: center;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.447);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 40px;
@@ -165,6 +165,48 @@
             opacity: 0.7;
             line-height: 1.4;
         }
+
+        #seekSlider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        #seekSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #seekSlider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #seekSlider:focus {
+            background: rgba(255,255,255,0.5);
+        }
+        #seekSlider::-ms-fill-lower {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
+        #seekSlider::-ms-fill-upper {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -197,6 +239,10 @@
             Your browser does not support the audio element.
         </audio>
         
+        <!-- Seek Slider -->
+        <input type="range" id="seekSlider" min="0" max="100" value="0" step="0.01" style="width: 100%; margin-top: 10px; display: block;">
+        <div id="timeDisplay" style="font-size: 13px; margin-top: 2px; opacity: 0.8; text-align: right;"></div>
+        
         <div class="instructions">
             <strong>How to use:</strong><br>
             1. Just press play!<br>
@@ -214,6 +260,8 @@
         const loopStatus = document.getElementById('loopStatus');
         const loopControls = document.getElementById('loopControls');
         const restartBtn = document.getElementById('restartBtn');
+        const seekSlider = document.getElementById('seekSlider');
+        const timeDisplay = document.getElementById('timeDisplay');
         
         let isPlaying = false;
         let loopMode = 'infinite';
@@ -392,19 +440,41 @@
             updateLoopButtons();
         }
 
-        audioPlayer.addEventListener('timeupdate', () => {
-            if (isPlaying) {
-                const minutes = Math.floor(audioPlayer.currentTime / 60);
-                const seconds = Math.floor(audioPlayer.currentTime % 60);
-                if (loopMode === 'custom') {
-                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')} (${currentPlayCount}/${customLoopCount})`;
-                } else if (loopMode === 'infinite' && currentPlayCount > 0) {
-                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')} (loop ${currentPlayCount})`;
-                } else {
-                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                }
-            }
+        // Update slider max when audio metadata is loaded
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            seekSlider.max = audioPlayer.duration;
+            seekSlider.value = 0;
+            updateTimeDisplay();
         });
+
+        // Update slider as audio plays
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!seekSlider.dragging) {
+                seekSlider.value = audioPlayer.currentTime;
+            }
+            updateTimeDisplay();
+        });
+
+        // Seek when slider is changed
+        seekSlider.addEventListener('input', (e) => {
+            seekSlider.dragging = true;
+            updateTimeDisplay(Number(e.target.value));
+        });
+        seekSlider.addEventListener('change', (e) => {
+            audioPlayer.currentTime = Number(e.target.value);
+            seekSlider.dragging = false;
+        });
+
+        function updateTimeDisplay(val) {
+            const current = val !== undefined ? val : audioPlayer.currentTime;
+            const duration = audioPlayer.duration || 0;
+            const format = (t) => {
+                const m = Math.floor(t / 60);
+                const s = Math.floor(t % 60);
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            };
+            timeDisplay.textContent = `${format(current)} / ${format(duration)}`;
+        }
 
         audioPlayer.addEventListener('error', () => {
             status.textContent = "Error loading audio file";
