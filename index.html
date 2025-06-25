@@ -226,7 +226,7 @@
         <div class="loop-controls" id="loopControls" style="display: none;">
             <span style="font-size: 14px;">Repeat:</span>
             <button class="control-btn" onclick="setLoopMode('infinite')" id="infiniteBtn">∞ Loop</button>
-            <input type="number" class="loop-input" id="loopCount" placeholder="3" min="1" max="99">
+            <input type="number" class="loop-input" id="loopCount" placeholder="2" min="1" max="99">
             <button class="control-btn" onclick="setCustomLoop()" id="customLoopBtn">times</button>
             <button class="control-btn" onclick="setLoopMode('once')" id="onceBtn">Play Once</button>
         </div>
@@ -265,7 +265,7 @@
         
         let isPlaying = false;
         let loopMode = 'infinite';
-        let customLoopCount = 3;
+        let customLoopCount = 2;
         let currentPlayCount = 0;
         let wakeLock = null;
         let audioLoaded = true;
@@ -274,7 +274,7 @@
             loopControls.innerHTML = `
                 <span style="font-size: 14px;">Repeat:</span>
                 <button class="control-btn" onclick="setLoopMode('infinite')" id="infiniteBtn">∞ Loop</button>
-                <input type="number" class="loop-input" id="loopCount" placeholder="3" min="1" max="99">
+                <input type="number" class="loop-input" id="loopCount" placeholder="2" min="1" max="99">
                 <button class="control-btn" onclick="setCustomLoop()" id="customLoopBtn">times</button>
                 <button class="control-btn" onclick="setLoopMode('once')" id="onceBtn">Play Once</button>
             `;
@@ -338,7 +338,7 @@
 
         function setCustomLoop() {
             const loopCountInput = document.getElementById('loopCount');
-            const count = parseInt(loopCountInput?.value) || 3;
+            const count = parseInt(loopCountInput?.value) || 2;
             customLoopCount = count;
             loopMode = 'custom';
             currentPlayCount = 0;
@@ -440,6 +440,30 @@
             updateLoopButtons();
         }
 
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (isPlaying) {
+                const minutes = Math.floor(audioPlayer.currentTime / 60);
+                const seconds = Math.floor(audioPlayer.currentTime % 60);
+                if (loopMode === 'custom') {
+                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')} (${currentPlayCount}/${customLoopCount})`;
+                } else if (loopMode === 'infinite' && currentPlayCount > 0) {
+                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')} (loop ${currentPlayCount})`;
+                } else {
+                    status.textContent = `Playing ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+        });
+
+        audioPlayer.addEventListener('error', () => {
+            status.textContent = "Error loading audio file";
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isPlaying && !wakeLock) {
+                requestWakeLock();
+            }
+        });
+
         // Update slider max when audio metadata is loaded
         audioPlayer.addEventListener('loadedmetadata', () => {
             seekSlider.max = audioPlayer.duration;
@@ -475,16 +499,6 @@
             };
             timeDisplay.textContent = `${format(current)} / ${format(duration)}`;
         }
-
-        audioPlayer.addEventListener('error', () => {
-            status.textContent = "Error loading audio file";
-        });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && isPlaying && !wakeLock) {
-                requestWakeLock();
-            }
-        });
 
         window.setLoopMode = setLoopMode;
         window.setCustomLoop = setCustomLoop;
